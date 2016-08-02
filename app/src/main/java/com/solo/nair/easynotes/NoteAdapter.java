@@ -23,39 +23,44 @@ import static com.solo.nair.easynotes.DataUtils.NOTE_FONT_SIZE;
 import static com.solo.nair.easynotes.DataUtils.NOTE_TITLE;
 import static com.solo.nair.easynotes.MainActivity.deleteActive;
 import static com.solo.nair.easynotes.MainActivity.searchActive;
-import static com.solo.nair.easynotes.MainActivity.setFavourite;
 
 
 public class NoteAdapter extends BaseAdapter implements ListAdapter {
-    private Context context;
-    private JSONArray adapterData;
-    private LayoutInflater inflater;
+    private Context mContext;
+    private JSONArray mData;
+    private OnFavoriteClickListener mListener;
 
     /**
      * Adapter constructor -> Sets class variables
-     * @param context application context
+     * @param context     application context
      * @param adapterData JSONArray of notes
      */
     public NoteAdapter(Context context, JSONArray adapterData) {
-        this.context = context;
-        this.adapterData = adapterData;
-        this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.mContext = context;
+        this.mData = adapterData;
+    }
+
+    public interface OnFavoriteClickListener {
+        void onFavoriteClick(boolean favoured, int position);
+    }
+
+    public void setOnFavoriteClickListener(final OnFavoriteClickListener mFavClickListener) {
+        //cannot resolve symbol
+        this.mListener = mFavClickListener;
     }
 
     @Override
     public int getCount() {
-        if (this.adapterData != null)
-            return this.adapterData.length();
-
+        if (this.mData != null)
+            return this.mData.length();
         else
             return 0;
     }
 
     @Override
     public JSONObject getItem(int position) {
-        if (this.adapterData != null)
-            return this.adapterData.optJSONObject(position);
-
+        if (this.mData != null)
+            return this.mData.optJSONObject(position);
         else
             return null;
     }
@@ -68,8 +73,9 @@ public class NoteAdapter extends BaseAdapter implements ListAdapter {
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
+        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (convertView == null)
-            convertView = this.inflater.inflate(R.layout.list_view_note, parent, false);
+            convertView = inflater.inflate(R.layout.list_view_note, parent, false);
 
         RelativeLayout relativeLayout = (RelativeLayout) convertView.findViewById(R.id.relativeLayout);
         TextView titleView = (TextView) convertView.findViewById(R.id.titleView);
@@ -79,11 +85,10 @@ public class NoteAdapter extends BaseAdapter implements ListAdapter {
         JSONObject noteObject = getItem(position);
 
         if (noteObject != null) {
-            String title = context.getString(R.string.note_title);
-            String body = context.getString(R.string.note_body);
-            String colour = String.valueOf(context.getResources().getColor(R.color.white));
+            String title = mContext.getString(R.string.note_title);
+            String body = mContext.getString(R.string.note_body);
+            String colour = String.valueOf(mContext.getResources().getColor(R.color.white));
             int fontSize = 18;
-            Boolean hideBody = false;
             Boolean favoured = false;
 
             try {
@@ -110,15 +115,10 @@ public class NoteAdapter extends BaseAdapter implements ListAdapter {
             else
                 favourite.setVisibility(View.VISIBLE);
 
-
             titleView.setText(title);
-            if (hideBody)
-                bodyView.setVisibility(View.GONE);
-            else {
-                bodyView.setVisibility(View.VISIBLE);
-                bodyView.setText(body);
-                bodyView.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
-            }
+            bodyView.setVisibility(View.VISIBLE);
+            bodyView.setText(body);
+            bodyView.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
 
             relativeLayout.setBackgroundColor(Color.parseColor(colour));
 
@@ -127,7 +127,7 @@ public class NoteAdapter extends BaseAdapter implements ListAdapter {
                 // If favourite button was clicked -> change that note to favourite or un-favourite
                 @Override
                 public void onClick(View v) {
-                    setFavourite(context, !finalFavoured, position);
+                    mListener.onFavoriteClick(!finalFavoured, position);
                 }
             });
         }

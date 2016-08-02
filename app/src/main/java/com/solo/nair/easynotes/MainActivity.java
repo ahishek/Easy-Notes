@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
@@ -17,7 +18,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +37,6 @@ import static com.solo.nair.easynotes.DataUtils.NOTE_BODY;
 import static com.solo.nair.easynotes.DataUtils.NOTE_COLOUR;
 import static com.solo.nair.easynotes.DataUtils.NOTE_FAVOURED;
 import static com.solo.nair.easynotes.DataUtils.NOTE_FONT_SIZE;
-import static com.solo.nair.easynotes.DataUtils.NOTE_HIDE_BODY;
 import static com.solo.nair.easynotes.DataUtils.NOTE_REQUEST_CODE;
 import static com.solo.nair.easynotes.DataUtils.NOTE_TITLE;
 import static com.solo.nair.easynotes.DataUtils.deleteNotes;
@@ -48,19 +47,19 @@ import static com.solo.nair.easynotes.DataUtils.saveData;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener,
         Toolbar.OnMenuItemClickListener, AbsListView.MultiChoiceModeListener,
-        SearchView.OnQueryTextListener, View.OnClickListener {
+        SearchView.OnQueryTextListener, View.OnClickListener, NoteAdapter.OnFavoriteClickListener {
 
     private static File localPath, backupPath;
 
     // Layout components
-    private static ListView listView;
-    private ImageButton newNoteFab;
+    private ListView listView;
+    private FloatingActionButton newNoteFab;
     private TextView noNotes;
     private Toolbar toolbar;
     private MenuItem searchMenu;
 
-    private static JSONArray notes;
-    private static NoteAdapter adapter;
+    private JSONArray notes;
+    private NoteAdapter adapter;
 
     public static ArrayList<Integer> checkedArray = new ArrayList<Integer>();
     public static boolean deleteActive = false; // True if delete mode is active, false otherwise
@@ -99,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         toolbar = (Toolbar) findViewById(R.id.toolbarMain);
         listView = (ListView) findViewById(R.id.listView);
-        newNoteFab = (ImageButton) findViewById(R.id.newNote);
+        newNoteFab = (FloatingActionButton) findViewById(R.id.newNote);
         if (newNoteFab != null)
             newNoteFab.setOnClickListener(this);
         noNotes = (TextView) findViewById(R.id.noNotes);
@@ -110,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         newNoteButtonBaseYCoordinate = newNoteFab.getY();
 
         adapter = new NoteAdapter(getApplicationContext(), notes);
+        adapter.setOnFavoriteClickListener(this);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
@@ -128,7 +128,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     // If scrolled down and delete/search not active -> show newNoteFab button
                 else if (view.getFirstVisiblePosition() < lastFirstVisibleItem &&
                         !deleteActive && !searchActive) {
-
                     newNoteButtonVisibility(true);
                 }
 
@@ -275,12 +274,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 intent.putExtra(NOTE_COLOUR, notes.getJSONObject(newPosition).getString(NOTE_COLOUR));
                 intent.putExtra(NOTE_FONT_SIZE, notes.getJSONObject(newPosition).getInt(NOTE_FONT_SIZE));
 
-                if (notes.getJSONObject(newPosition).has(NOTE_HIDE_BODY)) {
-                    intent.putExtra(NOTE_HIDE_BODY,
-                            notes.getJSONObject(newPosition).getBoolean(NOTE_HIDE_BODY));
-                } else
-                    intent.putExtra(NOTE_HIDE_BODY, false);
-
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -293,12 +286,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 intent.putExtra(NOTE_BODY, notes.getJSONObject(position).getString(NOTE_BODY));
                 intent.putExtra(NOTE_COLOUR, notes.getJSONObject(position).getString(NOTE_COLOUR));
                 intent.putExtra(NOTE_FONT_SIZE, notes.getJSONObject(position).getInt(NOTE_FONT_SIZE));
-
-                if (notes.getJSONObject(position).has(NOTE_HIDE_BODY)) {
-                    intent.putExtra(NOTE_HIDE_BODY,
-                            notes.getJSONObject(position).getBoolean(NOTE_HIDE_BODY));
-                } else
-                    intent.putExtra(NOTE_HIDE_BODY, false);
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -375,6 +362,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         public void onClick(DialogInterface dialog, int which) {
                             notes = deleteNotes(notes, checkedArray);
                             adapter = new NoteAdapter(getApplicationContext(), notes);
+                            adapter.setOnFavoriteClickListener(MainActivity.this);
                             listView.setAdapter(adapter);
                             Boolean saveSuccessful = saveData(localPath, notes);
                             if (saveSuccessful) {
@@ -486,6 +474,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
             }
             NoteAdapter searchAdapter = new NoteAdapter(getApplicationContext(), notesFound);
+            searchAdapter.setOnFavoriteClickListener(this);
             listView.setAdapter(searchAdapter);
         } else {
             realIndexesOfSearchResults = new ArrayList<Integer>();
@@ -493,6 +482,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 realIndexesOfSearchResults.add(i);
 
             adapter = new NoteAdapter(getApplicationContext(), notes);
+            adapter.setOnFavoriteClickListener(this);
             listView.setAdapter(adapter);
         }
 
@@ -513,6 +503,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void searchEnded() {
         searchActive = false;
         adapter = new NoteAdapter(getApplicationContext(), notes);
+        adapter.setOnFavoriteClickListener(this);
         listView.setAdapter(adapter);
         listView.setLongClickable(true);
         newNoteButtonVisibility(true);
@@ -546,7 +537,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         newNoteObject.put(NOTE_COLOUR, mBundle.getString(NOTE_COLOUR));
                         newNoteObject.put(NOTE_FAVOURED, false);
                         newNoteObject.put(NOTE_FONT_SIZE, mBundle.getInt(NOTE_FONT_SIZE));
-                        newNoteObject.put(NOTE_HIDE_BODY, mBundle.getBoolean(NOTE_HIDE_BODY));
                         notes.put(newNoteObject);
 
                     } catch (JSONException e) {
@@ -574,7 +564,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         newNoteObject.put(NOTE_BODY, mBundle.getString(NOTE_BODY));
                         newNoteObject.put(NOTE_COLOUR, mBundle.getString(NOTE_COLOUR));
                         newNoteObject.put(NOTE_FONT_SIZE, mBundle.getInt(NOTE_FONT_SIZE));
-                        newNoteObject.put(NOTE_HIDE_BODY, mBundle.getBoolean(NOTE_HIDE_BODY));
                         notes.put(requestCode, newNoteObject);
 
                     } catch (JSONException e) {
@@ -611,16 +600,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     /**
      * Favourite or un-favourite the note at position
-     *
-     * @param context   application context
      * @param favourite true to favourite, false to un-favourite
      * @param position  position of note
      */
-    public static void setFavourite(Context context, boolean favourite, int position) {
+    public void setFavourite(boolean favourite, int position) {
         JSONObject newFavourite = null;
         try {
             newFavourite = notes.getJSONObject(position);
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -652,7 +638,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         }
                     }
                     notes = newArray;
-                    adapter = new NoteAdapter(context, notes);
+                    adapter = new NoteAdapter(this, notes);
+                    adapter.setOnFavoriteClickListener(this);
                     listView.setAdapter(adapter);
                     listView.post(new Runnable() {
                         public void run() {
@@ -738,5 +725,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             default:
                 break;
         }
+    }
+
+    @Override
+    public void onFavoriteClick(boolean favoured, int position) {
+        setFavourite(favoured, position);
     }
 }

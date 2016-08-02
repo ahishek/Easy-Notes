@@ -1,72 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    tools:context=".MainActivity"
-    android:background="@color/background_white" >
+    android:background="@color/background_white"
+    tools:context=".MainActivity">
 
-    <include
-        android:id="@+id/toolbarMain"
-        layout="@layout/toolbar"/>
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/toolbarAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <include
+            android:id="@+id/toolbarMain"
+            layout="@layout/toolbar"/>
+
+    </android.support.design.widget.AppBarLayout>
 
     <ListView
+        android:id="@+id/listView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/listView"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:clipToPadding="false"
         android:divider="@null"
-        android:dividerHeight="8dp"
+        android:dividerHeight="@dimen/list_divider"
         android:drawSelectorOnTop="true"
         android:fastScrollEnabled="true"
-        android:scrollbarStyle="outsideOverlay"
-        android:paddingRight="16dp"
-        android:paddingLeft="16dp"
-        android:clipToPadding="false"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_below="@+id/toolbarMain"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp" />
+        android:paddingBottom="@dimen/list_padding_top"
+        android:paddingLeft="@dimen/list_padding_side"
+        android:paddingRight="@dimen/list_padding_side"
+        android:paddingTop="@dimen/list_padding_top"
+        android:scrollbarStyle="outsideOverlay"/>
 
-    <ImageButton
-        android:layout_width="65dp"
-        android:layout_height="65dp"
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/newNote"
-        android:scaleType="fitXY"
-        android:background="@drawable/ic_new_selector"
-        android:layout_marginBottom="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:contentDescription="@string/new_note_content_description" />
-
-    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_add"
+        app:layout_anchor="@id/listView"
+        app:layout_anchorGravity="bottom|end"
+        app:backgroundTint="@color/theme_secondary"
+        app:fabSize="normal"/>
+
+    <TextView
         android:id="@+id/noNotes"
-        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/text_margin"
+        android:layout_marginRight="@dimen/text_margin"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"
         android:text="@string/no_notes_text"
+        android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="@color/theme_primary"
         android:textStyle="bold"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true"
-        android:gravity="center"
-        android:layout_marginLeft="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_centerInParent="true"
-        android:visibility="invisible" />
+        android:visibility="gone"
+        tools:visibility="visible"/>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/shadow_elevation"
-        android:layout_below="@+id/toolbarMain"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentLeft="true"
-        android:background="@drawable/drop_shadow" />
-
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

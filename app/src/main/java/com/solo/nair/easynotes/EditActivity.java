@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
@@ -17,7 +18,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
-import android.widget.Toast;
 
 import com.solo.nair.easynotes.ColorPicker.ColorPickerDialog;
 
@@ -27,7 +27,6 @@ import static com.solo.nair.easynotes.DataUtils.NEW_NOTE_REQUEST;
 import static com.solo.nair.easynotes.DataUtils.NOTE_BODY;
 import static com.solo.nair.easynotes.DataUtils.NOTE_COLOUR;
 import static com.solo.nair.easynotes.DataUtils.NOTE_FONT_SIZE;
-import static com.solo.nair.easynotes.DataUtils.NOTE_HIDE_BODY;
 import static com.solo.nair.easynotes.DataUtils.NOTE_REQUEST_CODE;
 import static com.solo.nair.easynotes.DataUtils.NOTE_TITLE;
 
@@ -36,13 +35,12 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
 
     private final String COLOR_PICKER_TAG = "Color Picker";
 
-    private EditText titleEdit, bodyEdit;
-    private RelativeLayout relativeLayoutEdit;
-    private Toolbar toolbar;
-    private MenuItem menuHideBody;
+    private EditText mTitleEditText, mBodyEditText;
+    private RelativeLayout mRootRl;
+    private Toolbar mToolbar;
 
-    private InputMethodManager imm;
-    private Bundle bundle;
+    private InputMethodManager mInputManager;
+    private Bundle mBundle;
 
     private String[] colourArr;
     private int[] colourArrResId;
@@ -52,7 +50,6 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
     // Defaults
     private String colour = "#FFFFFF"; // white default
     private int fontSize = 18; // Medium default
-    private Boolean hideBody = false;
 
     private AlertDialog fontDialog, saveChangesDialog;
     private ColorPickerDialog colorPickerDialog;
@@ -73,26 +70,26 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
         setContentView(R.layout.activity_edit);
 
         // Init layout components
-        toolbar = (Toolbar)findViewById(R.id.toolbarEdit);
-        titleEdit = (EditText)findViewById(R.id.titleEdit);
-        bodyEdit = (EditText)findViewById(R.id.bodyEdit);
-        relativeLayoutEdit = (RelativeLayout)findViewById(R.id.relativeLayoutEdit);
+        mToolbar = (Toolbar)findViewById(R.id.toolbarEdit);
+        mTitleEditText = (EditText)findViewById(R.id.titleEdit);
+        mBodyEditText = (EditText)findViewById(R.id.bodyEdit);
+        mRootRl = (RelativeLayout)findViewById(R.id.relativeLayoutEdit);
         ScrollView scrollView = (ScrollView)findViewById(R.id.scrollView);
 
-        imm = (InputMethodManager) this.getSystemService(INPUT_METHOD_SERVICE);
+        mInputManager = (InputMethodManager) this.getSystemService(INPUT_METHOD_SERVICE);
 
-        if (toolbar != null)
+        if (mToolbar != null)
             initToolbar();
 
         if (scrollView != null)
             scrollView.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent event) {
-                    if (!bodyEdit.isFocused()) {
-                        bodyEdit.requestFocus();
-                        bodyEdit.setSelection(bodyEdit.getText().length());
+                    if (!mBodyEditText.isFocused()) {
+                        mBodyEditText.requestFocus();
+                        mBodyEditText.setSelection(mBodyEditText.getText().length());
                         // Force show keyboard
-                        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,
+                        mInputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED,
                                 InputMethodManager.HIDE_IMPLICIT_ONLY);
 
                         return true;
@@ -102,30 +99,26 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                 }
             });
 
-        bundle = getIntent().getExtras();
+        mBundle = getIntent().getExtras();
 
-        if (bundle != null) {
+        if (mBundle != null) {
             // If current note is not new -> initialize colour, font, hideBody and EditTexts
-            if (bundle.getInt(NOTE_REQUEST_CODE) != NEW_NOTE_REQUEST) {
-                colour = bundle.getString(NOTE_COLOUR);
-                fontSize = bundle.getInt(NOTE_FONT_SIZE);
-                hideBody = bundle.getBoolean(NOTE_HIDE_BODY);
+            if (mBundle.getInt(NOTE_REQUEST_CODE) != NEW_NOTE_REQUEST) {
+                colour = mBundle.getString(NOTE_COLOUR);
+                fontSize = mBundle.getInt(NOTE_FONT_SIZE);
 
-                titleEdit.setText(bundle.getString(NOTE_TITLE));
-                bodyEdit.setText(bundle.getString(NOTE_BODY));
-                bodyEdit.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
-
-                if (hideBody)
-                    menuHideBody.setTitle(R.string.action_show_body);
+                mTitleEditText.setText(mBundle.getString(NOTE_TITLE));
+                mBodyEditText.setText(mBundle.getString(NOTE_BODY));
+                mBodyEditText.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
             }
 
             // If current note is new -> request keyboard focus to note title and show keyboard
-            else if (bundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST) {
-                titleEdit.requestFocus();
-                imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            else if (mBundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST) {
+                mTitleEditText.requestFocus();
+                mInputManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
             }
 
-            relativeLayoutEdit.setBackgroundColor(Color.parseColor(colour));
+            mRootRl.setBackgroundColor(Color.parseColor(colour));
         }
 
         initDialogs(this);
@@ -133,21 +126,21 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
 
 
     /**
-     * Initialize toolbar with required components such as
+     * Initialize mToolbar with required components such as
      * - title, navigation icon + listener, menu/OnMenuItemClickListener, menuHideBody -
      */
     protected void initToolbar() {
-        toolbar.setTitle("");
+        mToolbar.setTitle("");
 
-        toolbar.setNavigationIcon(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
-        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+        mToolbar.setNavigationIcon(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
             }
         });
-        toolbar.inflateMenu(R.menu.menu_edit);
-        toolbar.setOnMenuItemClickListener(this);
+        mToolbar.inflateMenu(R.menu.menu_edit);
+        mToolbar.setOnMenuItemClickListener(this);
     }
 
 
@@ -168,7 +161,7 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                     if (aColour.equals(selectedColourAsString))
                         colour = aColour;
 
-                relativeLayoutEdit.setBackgroundColor(Color.parseColor(colour));
+                mRootRl.setBackgroundColor(Color.parseColor(colour));
             }
         });
 
@@ -179,7 +172,7 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         fontSize = fontSizeArr[which];
-                        bodyEdit.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
+                        mBodyEditText.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontSize);
                     }
                 })
                 .setNeutralButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -196,20 +189,20 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                 .setPositiveButton(R.string.yes_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (!isEmpty(titleEdit))
+                        if (!isEmpty(mTitleEditText))
                             saveChanges();
                         else
-                            toastEditTextCannotBeEmpty();
+                            showEmptyTextSnackBar();
                     }
                 })
                 .setNegativeButton(R.string.no_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (bundle != null && bundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST) {
+                        if (mBundle != null && mBundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST) {
                             Intent intent = new Intent();
                             intent.putExtra("request", "discard");
                             setResult(RESULT_CANCELED, intent);
-                            imm.hideSoftInputFromWindow(titleEdit.getWindowToken(), 0);
+                            mInputManager.hideSoftInputFromWindow(mTitleEditText.getWindowToken(), 0);
                             dialog.dismiss();
                             finish();
                             overridePendingTransition(0, 0);
@@ -247,6 +240,10 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                 colorPickerDialog.show(getFragmentManager(), COLOR_PICKER_TAG);
                 return true;
 
+            case R.id.action_save:
+                saveChanges();
+                return true;
+
             default:
                 return false;
         }
@@ -259,13 +256,12 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
      */
     protected void saveChanges() {
         Intent intent = new Intent();
-        intent.putExtra(NOTE_TITLE, titleEdit.getText().toString());
-        intent.putExtra(NOTE_BODY, bodyEdit.getText().toString());
+        intent.putExtra(NOTE_TITLE, mTitleEditText.getText().toString());
+        intent.putExtra(NOTE_BODY, mBodyEditText.getText().toString());
         intent.putExtra(NOTE_COLOUR, colour);
         intent.putExtra(NOTE_FONT_SIZE, fontSize);
-        intent.putExtra(NOTE_HIDE_BODY, hideBody);
         setResult(RESULT_OK, intent);
-        imm.hideSoftInputFromWindow(titleEdit.getWindowToken(), 0);
+        mInputManager.hideSoftInputFromWindow(mTitleEditText.getWindowToken(), 0);
         finish();
         overridePendingTransition(0, 0);
     }
@@ -276,7 +272,7 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
      */
     @Override
     public void onBackPressed() {
-        if (bundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST)
+        if (mBundle.getInt(NOTE_REQUEST_CODE) == NEW_NOTE_REQUEST)
             saveChangesDialog.show();
 
         else {
@@ -285,23 +281,19 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
              *  If yes -> saveChanges
              *  If not -> hide keyboard if showing and finish
              */
-            if (!isEmpty(titleEdit)) {
-                if (!(titleEdit.getText().toString().equals(bundle.getString(NOTE_TITLE))) ||
-                    !(bodyEdit.getText().toString().equals(bundle.getString(NOTE_BODY))) ||
-                    !(colour.equals(bundle.getString(NOTE_COLOUR))) ||
-                    fontSize != bundle.getInt(NOTE_FONT_SIZE) ||
-                    hideBody != bundle.getBoolean(NOTE_HIDE_BODY)) {
+            if (!isEmpty(mTitleEditText)) {
+                if (!(mTitleEditText.getText().toString().equals(mBundle.getString(NOTE_TITLE))) ||
+                    !(mBodyEditText.getText().toString().equals(mBundle.getString(NOTE_BODY))) ||
+                    !(colour.equals(mBundle.getString(NOTE_COLOUR))) ||
+                    fontSize != mBundle.getInt(NOTE_FONT_SIZE)) {
                     saveChanges();
-                }
-
-                else {
-                    imm.hideSoftInputFromWindow(titleEdit.getWindowToken(), 0);
+                } else {
+                    mInputManager.hideSoftInputFromWindow(mTitleEditText.getWindowToken(), 0);
                     finish();
                     overridePendingTransition(0, 0);
                 }
-            }
-            else
-                toastEditTextCannotBeEmpty();
+            } else
+                showEmptyTextSnackBar();
         }
     }
 
@@ -316,13 +308,18 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
     }
 
     /**
-     * Show Toast for 'Title cannot be empty'
+     * Show SnackBar for 'Title cannot be empty'
      */
-    protected void toastEditTextCannotBeEmpty() {
-        Toast toast = Toast.makeText(getApplicationContext(),
-                getResources().getString(R.string.toast_edittext_cannot_be_empty),
-                Toast.LENGTH_LONG);
-        toast.show();
+    protected void showEmptyTextSnackBar() {
+        Snackbar.make(findViewById(android.R.id.content),
+                getString(R.string.toast_edittext_cannot_be_empty), Snackbar.LENGTH_LONG)
+                .setAction("Type", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mTitleEditText.requestFocus();
+                    }
+                })
+                .show();
     }
 
 
@@ -335,8 +332,8 @@ public class EditActivity extends AppCompatActivity implements Toolbar.OnMenuIte
         super.onWindowFocusChanged(hasFocus);
 
         if (!hasFocus)
-            if (imm != null && titleEdit != null)
-                imm.hideSoftInputFromWindow(titleEdit.getWindowToken(), 0);
+            if (mInputManager != null && mTitleEditText != null)
+                mInputManager.hideSoftInputFromWindow(mTitleEditText.getWindowToken(), 0);
     }
 
 
