@@ -117,21 +117,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
-                // If last first visible item not initialized -> set to current first
                 if (lastFirstVisibleItem == -1)
                     lastFirstVisibleItem = view.getFirstVisiblePosition();
 
-                // If scrolled up -> hide newNoteFab button
                 if (view.getFirstVisiblePosition() > lastFirstVisibleItem)
                     newNoteButtonVisibility(false);
-
-                    // If scrolled down and delete/search not active -> show newNoteFab button
                 else if (view.getFirstVisiblePosition() < lastFirstVisibleItem &&
                         !deleteActive && !searchActive) {
                     newNoteButtonVisibility(true);
                 }
-
-                // Set last first visible item to current
                 lastFirstVisibleItem = view.getFirstVisiblePosition();
             }
 
