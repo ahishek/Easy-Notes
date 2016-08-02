@@ -16,6 +16,7 @@
 
         <include
             android:id="@+id/toolbarMain"
+            app:layout_scrollFlags="scroll|enterAlways"
             layout="@layout/toolbar"/>
 
     </android.support.design.widget.AppBarLayout>

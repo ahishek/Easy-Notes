@@ -3,6 +3,7 @@
 
     <color name="theme_primary">#CE0A31</color>
     <color name="theme_secondary">#FFB00A31</color>
+    <color name="theme_accent">#E040FB</color>
 
     <color name="drop_shadow_grey">#87737373</color>
     <color name="background_white">#FFE6E6E6</color>
